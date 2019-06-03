@@ -1,0 +1,256 @@
+# this script will create graphs from 
+# the espn pre-season fantasy rankings 
+# and fantasy pros end of season rankings
+
+
+# libraries 
+ library(stringr)
+ library(dplyr)
+ library(ggplot2)
+
+
+# reading files 
+ 
+ espn_rankings <- read.csv(
+   'data/espn rankings_16_18.csv', 
+   stringsAsFactors = F
+ )
+ 
+ fp_finishes <- read.csv(
+   'data/fp finishes_16_18.csv', 
+   stringsAsFactors = F
+ )
+
+
+
+
+
+
+# joining rankings to finishes ======================================================================
+
+# going to join based on year, first, and last name
+# would do team, but fantasypros only has current team
+# not the team they were on back during the season
+# going to left join to espn rankings because not every player
+# was ranked
+
+
+rank_finish <- left_join(
+  espn_rankings, fp_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+rank_finish %>% group_by(first, last, year) %>% 
+  summarize(count = n()) %>% 
+  filter(count > 1)
+
+
+# removing defense from rankings 
+
+espn_rankings <- espn_rankings %>% filter(
+  Pos != 'DST' & Pos !='D/ST'
+)
+
+
+rank_finish <- left_join(
+  espn_rankings, fp_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+# removing missing players 
+# after research it appears most are instances where 
+# the player didn't play during the season
+# or switched positions (ty monty)
+
+rank_finish <- rank_finish %>% filter(
+  !is.na(finish)
+)
+
+
+# going to filter out players with less than 10 games
+# going to make that a separate frame so that i can 
+# easily come back if needed
+
+
+full_szn_rf <- rank_finish %>% filter(
+  Games > 9
+)
+
+
+# variance graph ================================================================================
+
+# creating variable that is just 
+# difference between initial rank and final finish
+# going to graph that over time to see if 
+# higher or lower rankings are more volatile
+
+# also filtering out kickers, because who cares
+
+
+full_szn_rf <- full_szn_rf %>% mutate(
+  variance = init_rank - finish
+) %>% filter(
+  Pos != 'K'
+)
+
+
+
+full_szn_rf %>% ggplot(aes(init_rank, variance))+
+  geom_point(aes(color = as.character(year)))+
+  geom_hline(aes(yintercept = 0))+
+  facet_wrap(. ~ Pos, scales = 'free_x')+
+  scale_color_discrete(name = 'year')+
+  theme_bw()
+
+full_szn_rf %>% ggplot(aes(init_rank, variance))+
+  geom_point(aes(color = Pos))+
+  geom_hline(aes(yintercept = 0))+
+  geom_abline(aes(intercept = -30, slope = 1), linetype = 'dashed')+
+  facet_grid(year ~ . , scales = 'free_x')+
+  scale_color_discrete(name = 'Pos')+
+  theme_bw()
+
+
+
+# probably not much value of looking at 
+# players ranked over 60
+# if 10 teams, 6 of any positions is the likely 
+# max, so anything past that is maybe the last pick of
+# the draft
+
+full_szn_top <- full_szn_rf %>% filter(
+  init_rank < 61
+)
+
+
+full_szn_top %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(init_rank, variance))+
+  geom_point(aes(color = Pos))+
+  geom_hline(aes(yintercept = 0))+
+  geom_abline(aes(intercept = -30, slope = 1), linetype = 'dashed')+
+  facet_grid(year ~ . , scales = 'free_x')+
+  scale_color_discrete(name = 'Position')+
+  ylab('Initial minus Finish')+
+  xlab('Initial ESPN Ranking')+
+  theme_bw()+
+  ggsave('graphs/espn rank variance years.png', width = 13, height = 6)
+
+
+
+full_szn_top %>%filter(
+  Pos %in% c('WR', 'RB')
+) %>%  ggplot(aes(init_rank, variance))+
+  geom_point(aes(color = as.character(year)))+
+  geom_hline(aes(yintercept = 0))+
+  geom_abline(aes(intercept = -30, slope = 1), linetype = 'dashed')+
+  facet_grid(Pos ~ . , scales = 'free_x')+
+  scale_color_discrete(name = 'Year')+
+  ylab('Initial minus Finish')+
+  xlab('Initial ESPN Ranking')+
+  theme_bw()+
+  ggsave('graphs/espn rank variance pos.png', width = 13, height = 6)
+
+
+
+
+# graph of what ten (10, 20 , 30, etc)
+# position and number of top 30 from that ten
+# also average variance of that ten 
+# so you can see expected finish from each ten 
+# compare across years and positions
+
+full_szn_top <- full_szn_top %>% mutate(
+  ten = 1 + floor((init_rank-1) / 10)
+)
+
+full_szn_top$top_rank <- if_else(
+  full_szn_top$finish <31, 1, 0
+)
+
+full_szn_top$top_ten <- if_else(
+  full_szn_top$finish <11, 1, 0
+)
+
+
+ten_ranks <- full_szn_top %>% group_by(
+  year, ten, Pos
+) %>% summarize(
+  avg_var = mean(variance), 
+  avg_finish = mean(finish), 
+  top_players = sum(top_rank), 
+  net_var = sum(variance), 
+  top_ten = sum(top_ten)
+)
+
+
+
+
+
+ten_ranks %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(ten, top_players))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+    )+
+  scale_y_continuous(
+    name = 'Count of Top 30 Finishes', 
+    breaks = c(0:10)
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()+
+  ggsave(
+    'graphs/ESPN top finish counts.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+ten_ranks %>% filter(
+  Pos %in% c('TE', 'QB')
+) %>% ggplot(aes(ten, top_ten))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position',
+    values = c('TE' = 'dodgerblue3', 'QB' = 'forestgreen')
+    )+
+  scale_y_continuous(
+    name = 'Count of Top 10 Finishes', 
+    breaks = c(0:10)
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()+
+  ggsave(
+    'graphs/ESPN top finish counts_te.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
+

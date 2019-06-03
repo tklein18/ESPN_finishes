@@ -1,0 +1,9 @@
+{
+    "path" : "~/Desktop/ESPN_finishes",
+    "sortOrder" : [
+        {
+            "ascending" : true,
+            "columnIndex" : 2
+        }
+    ]
+}

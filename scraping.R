@@ -1,0 +1,295 @@
+# this script will pull ESPN pre-season 
+# fantasy rankings from ESPN web pages
+# and fantasy season finishes
+# and save them for later use as a csv
+
+
+# libraries
+
+library(rvest)
+library(tidyr)
+
+
+
+
+# getting 2016 & 2018 data ===========================================================================
+
+url_16 <- paste(
+  'http://www.espn.com/fantasy/football/story/_/id/16287927',
+  '/2016-fantasy-football-rankings-top-300', sep = ''
+)
+
+
+
+url_18 <- paste(
+  'http://www.espn.com/fantasy/football/story/_/page/',
+  '18RanksPreseason300PPR/2018-fantasy-football-ppr-rankings-top-300',
+  sep = ''
+)
+
+
+
+espn_years <- c(16, 18)
+
+for(i in espn_years){
+  
+  url_eval <- paste(
+    'temp_url = url_', i, sep = ''
+  )
+  
+  eval(
+    parse(text = url_eval)
+  )
+  
+  temp_webpage <- read_html(temp_url)
+  
+  temp_tables <- html_nodes(temp_webpage, 'table')
+  
+  table_count <- c(1 : length(temp_tables))
+  
+  for( t in table_count){
+    if(temp_tables[[t]] %>% html_table %>% 
+       nrow() > 20){
+      tbl_num <- t
+    }
+  }
+  
+  temp_rankings <- temp_tables[[tbl_num]] %>% 
+    html_table()
+  
+  temp_rankings <- temp_rankings %>% separate(
+    `Rank, Player`, into = c('rank', 'player'), 
+    extra = 'merge', sep = '\\.'
+  )
+  
+  temp_rankings$player <- str_trim(
+    temp_rankings$player, side = 'both'
+  )
+  
+  temp_assign <- paste(
+    'rankings', i, sep = '_'
+  )
+  
+  assign(temp_assign, temp_rankings)
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+# getting 2017 data ======================================================================
+
+# the 2017 table is a different format than the 
+# 2016 and 2018 tables, so the above loop won't work
+
+
+
+url_17 <- paste(
+  'http://www.espn.com/fantasy/football/story/_/page/',
+  '17RanksPreseason200PPR/2017-fantasy-football-ppr-rankings-top-200',
+  sep = ''
+)
+
+
+temp_webpage <- read_html(url_17)
+
+temp_tables <- html_nodes(temp_webpage, 'table')
+
+table_count <- c(1 : length(temp_tables))
+
+for( i in table_count){
+  
+  if(temp_tables[[i]] %>% html_table %>% 
+     nrow() > 20){
+    tbl_num <- i
+  }
+}
+
+
+
+temp_rankings <- temp_tables[[tbl_num]] %>% html_table()
+
+temp_rankings <- temp_rankings %>% separate(
+  `Player/Position/Team`, into = c('rank', 'player'), 
+  extra = 'merge', sep = '\\.'
+)
+
+
+temp_rankings <- temp_rankings %>% separate(
+  player, into = c('player', 'position', 'team'), 
+  sep = ','
+)
+
+temp_rankings[, c('player', 'position', 'team')] <- lapply(
+  temp_rankings[, c('player', 'position', 'team')], 
+  function(x) str_trim(x, side = 'both')
+)
+
+
+rankings_17 <- temp_rankings
+
+
+
+
+
+# reading in final rankings ======================================================================
+
+# reading in rankings from fantasypros instead of espn
+# because the table is simpler to read
+# and has pre-calculated point totals
+# downside is then joining to the espn data 
+# which might have slightly different names
+# for the players/teams
+# also includes games played
+# which will be used to filter out players
+# who did not play for a large part of the season
+# and thus do not make for a good comp
+
+
+
+for( i in c(2016:2018)){
+  
+  temp_url <- paste(
+    'https://www.fantasypros.com/nfl/reports/leaders/half-ppr.php?year=', 
+    i, '&start=1&end=17', sep = ''
+  )
+  
+  temp_webpage <- read_html(temp_url)
+  
+  temp_tables <- html_nodes(temp_webpage, 'table')
+  
+  for( t in table_count){
+    
+    if(temp_tables[[t]] %>% html_table %>% 
+       nrow() > 100){
+      tbl_num <- t
+    }
+  }
+  
+  temp_finish <- temp_tables[[tbl_num]] %>% 
+    html_table()
+  
+  temp_assign <- paste(
+    'finish_', substr(i, 3, 4), sep = ''
+  )
+  
+  temp_finish <- temp_finish %>% mutate(
+    year = i
+  )
+  
+  assign(temp_assign, temp_finish)
+  
+}
+
+
+
+
+# cleaning and binding espn data ==================================================================
+
+rankings_16 <- rankings_16 %>% select(
+  rank, player, Pos, Team
+) %>% mutate(
+  year= 2016
+)
+
+rankings_18 <- rankings_18 %>% select(
+  rank, player, Pos, Team
+) %>% mutate(
+  year = 2018
+)
+
+rankings_17 <- rankings_17 %>% select(
+  rank, player, position, team
+) %>% rename(
+  Pos = position, 
+  Team = team
+) %>% mutate(
+  year = 2017
+)
+
+espn_rankings <- bind_rows(
+  rankings_16, rankings_17, rankings_18
+)
+
+
+# separating names into first and last
+# and removing extra i.e. Jr.
+# also making all lower case 
+# also getting first name initial
+
+espn_rankings <- espn_rankings %>% separate(
+  player, into = c('first', 'last'), extra = 'drop', 
+  sep = ' '
+)
+
+espn_rankings[, c('first', 'last')] <- lapply(
+  espn_rankings[, c('first', 'last')], tolower
+)
+
+espn_rankings <- espn_rankings %>% 
+  group_by(year, Pos) %>% 
+  mutate(
+    rank = as.numeric(rank),
+    init_rank = rank(rank)
+  ) %>% ungroup()
+
+
+
+
+# cleaning and binding finishes =====================================================================
+
+fp_finishes <- bind_rows(
+  finish_16, finish_17, finish_18
+)
+
+
+
+fp_finishes <- fp_finishes %>% separate(
+  Player, into = c('first', 'last'), extra = 'drop', 
+  sep = ' '
+)
+
+fp_finishes[, c('first', 'last')] <- lapply(
+  fp_finishes[, c('first', 'last')], tolower
+)
+
+fp_finishes <- fp_finishes %>% filter(
+  !is.na(first) & !is.na(last)
+)
+
+
+fp_finishes <- fp_finishes %>% group_by(
+  year, Position
+) %>% mutate(
+  finish = rank(desc(Points), ties.method = 'first')
+) %>% ungroup()
+
+
+
+
+
+
+# saving the data sets =======================================================================================
+
+write.csv(
+  espn_rankings, row.names = F, 
+  'data/espn rankings_16_18.csv'
+  )
+
+write.csv(
+  fp_finishes, row.names = F, 
+  'data/fp finishes_16_18.csv'
+)
+
+
+
+
