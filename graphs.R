@@ -123,6 +123,17 @@ full_szn_top <- full_szn_rf %>% filter(
 )
 
 
+
+
+
+
+# graph of rb and WR initial ranks v final finishes 
+# dashed line indicates top-30 or better (above)
+# or worse than top-30 finish (below)
+# top-30 because in a ten-team 2 wr & rb and 1 flex
+# league, top-30 would be startable
+
+
 full_szn_top %>% filter(
   Pos %in% c('WR', 'RB')
 ) %>% ggplot(aes(init_rank, variance))+
@@ -137,6 +148,14 @@ full_szn_top %>% filter(
   ggsave('graphs/espn rank variance years.png', width = 13, height = 6)
 
 
+
+
+
+# graph of rb and WR initial ranks v final finishes 
+# dashed line indicates top-30 or better (above)
+# or worse than top-30 finish (below)
+# top-30 because in a ten-team 2 wr & rb and 1 flex
+# league, top-30 would be startable
 
 full_szn_top %>%filter(
   Pos %in% c('WR', 'RB')
@@ -187,6 +206,11 @@ ten_ranks <- full_szn_top %>% group_by(
 
 
 
+
+
+# count of top ten finishes for rbs and wrs
+# within the same 10 ranks (e.g. 1-10, 10-20)
+
 ten_ranks %>% filter(
   Pos %in% c('WR', 'RB')
 ) %>% ggplot(aes(ten, top_players))+
@@ -216,7 +240,8 @@ ten_ranks %>% filter(
 
 
 
-
+# count of top ten finishes for qbs and tes
+# within the same 10 ranks (e.g. 1-10, 10-20)
 
 ten_ranks %>% filter(
   Pos %in% c('TE', 'QB')
@@ -246,7 +271,9 @@ ten_ranks %>% filter(
 
 
 
-
+# showing the average difference between initial ESPN rank
+# and final fantasy finish for players 
+# within the same 10 ranks (e.g. 1-10, 10-20)
 
 ten_ranks %>% filter(
   Pos %in% c('WR', 'RB')
@@ -261,24 +288,68 @@ ten_ranks %>% filter(
     )
   )+
   scale_y_continuous(
-    name = 'Count of Top 30 Finishes'
+    name = 'Average Variance between Rank and Finish'
   )+
   scale_x_continuous(
     name = 'ESPN Ranks', 
     breaks = c(1:6), 
     labels = paste('Top ', seq(10, 60, 10), sep = '')
   )+
-  theme_bw()
+  theme_bw()+
+  ggsave(
+    'graphs/ESPN ranks average variance.png', 
+    height = 6, width = 13
+  )
 
 
 
 
 
+
+
+# showig the average finish for players
+# within the same 10 ranks (e.g. 1-10, 10-20)
 
 
 ten_ranks %>% filter(
   Pos %in% c('WR', 'RB')
 ) %>% ggplot(aes(ten, avg_finish))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  geom_hline(aes(yintercept = 30), linetype = 'dashed')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  scale_y_continuous(
+    name = 'Average Finish'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()+ggsave(
+    'graphs/ESPN rank average finish.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+# showing the net difference between initial rank 
+# and final finish for players ranked within the same ten
+
+ten_ranks %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(ten, avg_var))+
   geom_col(aes(fill = Pos), position = 'dodge')+
   facet_grid(year ~ . )+
   scale_fill_manual(
@@ -289,15 +360,53 @@ ten_ranks %>% filter(
     )
   )+
   scale_y_continuous(
-    name = 'Count of Top 30 Finishes'
+    name = 'Average Variance between Rank and Finish'
   )+
   scale_x_continuous(
     name = 'ESPN Ranks', 
     breaks = c(1:6), 
     labels = paste('Top ', seq(10, 60, 10), sep = '')
   )+
-  theme_bw()
+  theme_bw()+
+  ggsave(
+    'graphs/ESPN ranks net variance.png', 
+    height = 6, width = 13
+  )
 
+
+
+
+
+
+
+# count of top ten finishes for rbs and wrs
+# within the same 10 ranks (e.g. 1-10, 10-20)
+
+ten_ranks %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(ten, top_ten))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  scale_y_continuous(
+    name = 'Count of Top 10 Finishes', 
+    breaks = c(0:10)
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()+
+  ggsave(
+    'graphs/ESPN top ten finish counts.png', width = 13, height = 6
+  )
 
 
 
