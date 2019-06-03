@@ -248,7 +248,55 @@ ten_ranks %>% filter(
 
 
 
+ten_ranks %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(ten, avg_var))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  scale_y_continuous(
+    name = 'Count of Top 30 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()
 
+
+
+
+
+
+
+ten_ranks %>% filter(
+  Pos %in% c('WR', 'RB')
+) %>% ggplot(aes(ten, avg_finish))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ . )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  scale_y_continuous(
+    name = 'Count of Top 30 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  theme_bw()
 
 
 
