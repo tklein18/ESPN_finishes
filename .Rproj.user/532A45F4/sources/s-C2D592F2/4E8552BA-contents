@@ -411,3 +411,68 @@ ten_ranks %>% filter(
 
 
 
+
+
+
+
+
+
+# fantasy finish graphs ==========================================================================================
+
+
+top_40_finishes <- fp_finishes %>% 
+  filter(finish < 41)
+
+
+# density graph of point finishes by year by position
+# shows that rb has a very wide distribution, but 
+# that the top scoring rb's always score more than the top scoring 
+# wide receivers 
+# tight ends are almost all worthless 
+# quarterbacks have a very flat distribution
+
+top_40_finishes %>% filter(
+  Position %in% c('RB', 'WR', 'TE', 'QB')
+) %>%  ggplot(aes(Points))+
+  geom_density(aes(fill = Position), alpha = .2) +
+  facet_grid(year ~ .)+
+  theme_bw()+
+  ggsave(
+    'graphs/point distribution of positions.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+# graph shows that top finishing rb's are 
+# more valuable than top finishing WR's
+# but after the top they are equal
+
+top_40_finishes %>% filter(
+  Position %in% c('RB', 'WR', 'TE', 'QB')
+) %>% ggplot(aes(finish, Points))+
+  geom_line(aes(color = Position))+
+  geom_vline(aes(xintercept = 10))+
+  geom_vline(aes(xintercept = 30))+
+  facet_grid(year ~ .)+
+  xlab('End of Season Finish')+
+  theme_bw()+
+  ggsave(
+    'graphs/points by finish and position.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
