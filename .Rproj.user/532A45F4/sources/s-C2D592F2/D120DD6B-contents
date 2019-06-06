@@ -393,5 +393,9 @@ write.csv(
 )
 
 
+write.csv(
+  weekly_finishes, row.names = F, 
+  'data/fp weekly finishes_16_18.csv'
+)
 
 
