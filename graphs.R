@@ -7,6 +7,7 @@
  library(stringr)
  library(dplyr)
  library(ggplot2)
+ library(tidyr)
 
 
 # reading files 
@@ -21,6 +22,11 @@
    stringsAsFactors = F
  )
 
+ 
+ weekly_rankings <- read.csv(
+   'data/fp weekly finishes_16_18.csv', 
+   stringsAsFactors = F
+ )
 
 
 
@@ -48,7 +54,7 @@ rank_finish %>% group_by(first, last, year) %>%
 # removing defense from rankings 
 
 espn_rankings <- espn_rankings %>% filter(
-  Pos != 'DST' & Pos !='D/ST'
+  Pos != 'DST' & Pos !='D/ST' & Pos != 'K'
 )
 
 
@@ -77,7 +83,7 @@ full_szn_rf <- rank_finish %>% filter(
 )
 
 
-# variance graph ================================================================================
+# variance graph ===========================================================================================
 
 # creating variable that is just 
 # difference between initial rank and final finish
@@ -89,8 +95,6 @@ full_szn_rf <- rank_finish %>% filter(
 
 full_szn_rf <- full_szn_rf %>% mutate(
   variance = init_rank - finish
-) %>% filter(
-  Pos != 'K'
 )
 
 
@@ -468,8 +472,136 @@ top_40_finishes %>% filter(
 
 
 
+# joining espn_ranks and weekly finishes ====================================================================
 
 
+top_10_finishes <- weekly_rankings %>% filter(
+  finish < 11
+) %>% group_by(
+  first, last, Position, year
+) %>% summarize(
+  count = n()
+)
+
+
+
+rank_top_10 <- left_join(
+  espn_rankings, top_10_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+rank_top_10 <- rank_top_10 %>% mutate(
+  ten = 1 + floor((init_rank-1) / 10)
+) %>% filter(
+  init_rank < 61 & !is.na(count)
+) %>% group_by(year, ten, Pos) %>% summarize(
+  count = sum(count)
+) %>% ungroup() %>% complete(
+  year, ten, Pos, fill = list(count = 0)
+)
+
+
+
+
+# graphs the number of top ten weekly finishes 
+# for players ranked in a ten range 
+# rbs and wrs
+
+rank_top_10 %>% filter(Pos %in% c('WR', 'RB')) %>% 
+  ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Top Ten Weekly Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  ggsave('graphs/count of top ten weeks.png', width = 13, height = 6)
+
+
+
+
+
+
+
+
+
+# going to do top-5 finishes 
+# for qb and te since you can only start
+# one of them 
+
+top_5_finishes <- weekly_rankings %>% filter(
+  finish < 6
+) %>% group_by(
+  first, last, Position, year
+) %>% summarize(
+  count = n()
+)
+
+
+
+rank_top_5 <- left_join(
+  espn_rankings, top_5_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+rank_top_5 <- rank_top_5 %>% mutate(
+  ten = 1 + floor((init_rank-1) / 10)
+) %>% filter(
+  init_rank < 61 & !is.na(count)
+) %>% group_by(year, ten, Pos) %>% summarize(
+  count = sum(count)
+) %>% ungroup() %>% complete(
+  year, ten, Pos, fill = list(count = 0)
+)
+
+
+
+
+
+
+# number of top ten weekly finishes 
+# for players in a ten range
+# tes and qbs
+
+
+rank_top_5%>% filter(
+  Pos %in% c('TE', 'QB') & ten < 4
+  ) %>% 
+  ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Top Five Weekly Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'TE' = 'dodgerblue3', 'QB' = 'forestgreen'
+    )
+  )+
+  ggsave(
+    'graphs/count of top weeks_qbte.png', width = 13, height = 6
+  )
 
 
 
