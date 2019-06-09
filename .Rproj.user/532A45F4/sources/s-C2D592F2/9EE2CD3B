@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1560096317062.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "9EE2CD3B",
+    "lastKnownWriteTime" : 6066188611752034310,
+    "last_content_update" : 1560096317062,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "81C6D636",
+        "caption" : "top_30_finishes",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=top_30_finishes&cache_key=81C6D636",
+        "displayedObservations" : 178,
+        "environment" : "",
+        "object" : "top_30_finishes",
+        "preview" : 0,
+        "totalObservations" : 178,
+        "variables" : 5
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

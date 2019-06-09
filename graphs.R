@@ -475,6 +475,11 @@ top_40_finishes %>% filter(
 # joining espn_ranks and weekly finishes ====================================================================
 
 
+
+# top ten finishes 
+# a top ten finish is really good for WR and RB
+# and startable for QB and TE
+
 top_10_finishes <- weekly_rankings %>% filter(
   finish < 11
 ) %>% group_by(
@@ -500,6 +505,92 @@ rank_top_10 <- rank_top_10 %>% mutate(
 ) %>% ungroup() %>% complete(
   year, ten, Pos, fill = list(count = 0)
 )
+
+
+
+
+
+# going to do top-5 finishes 
+# for qb and te since you can only start one
+# top 5 would be a really good week 
+
+top_5_finishes <- weekly_rankings %>% filter(
+  finish < 6
+) %>% group_by(
+  first, last, Position, year
+) %>% summarize(
+  count = n()
+)
+
+
+
+rank_top_5 <- left_join(
+  espn_rankings, top_5_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+rank_top_5 <- rank_top_5 %>% mutate(
+  ten = 1 + floor((init_rank-1) / 10)
+) %>% filter(
+  init_rank < 61 & !is.na(count)
+) %>% group_by(year, ten, Pos) %>% summarize(
+  count = sum(count)
+) %>% ungroup() %>% complete(
+  year, ten, Pos, fill = list(count = 0)
+)
+
+
+
+
+
+
+# going to do top 30 for WR and RB
+# since that would be startable
+
+
+top_30_finishes <- weekly_rankings %>% mutate(
+  ten_finish = paste('Top', 10*(1 + floor((finish-1) / 10)))
+) %>% filter(
+  finish < 31
+) %>% group_by(
+  first, last, Position, year, ten_finish
+) %>% summarize(
+  count = n()
+)
+
+
+
+top_30_finishes <- left_join(
+  espn_rankings, top_30_finishes, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+top_30_finishes <- top_30_finishes %>% mutate(
+  ten = 1 + floor((init_rank-1) / 10)
+) %>% filter(
+  init_rank < 61 & !is.na(count)
+) %>% group_by(year, ten, Pos, ten_finish) %>% summarize(
+  count = sum(count)
+) %>% ungroup() %>% complete(
+  year, ten, Pos, fill = list(count = 0)
+)
+
+
+
+
+
+
+
+
+
+
+
+# graphs of weekly finishes ==================================================================================
+
+
+
 
 
 
@@ -535,45 +626,43 @@ rank_top_10 %>% filter(Pos %in% c('WR', 'RB')) %>%
 
 
 
+# graphs the number of top ten weekly finishes 
+# for players ranked in a ten range 
+# rbs and wrs
 
-
-
-# going to do top-5 finishes 
-# for qb and te since you can only start
-# one of them 
-
-top_5_finishes <- weekly_rankings %>% filter(
-  finish < 6
-) %>% group_by(
-  first, last, Position, year
-) %>% summarize(
-  count = n()
-)
-
-
-
-rank_top_5 <- left_join(
-  espn_rankings, top_5_finishes, 
-  by = c('first', 'last', 'year', 'Pos' = 'Position')
-)
-
-
-rank_top_5 <- rank_top_5 %>% mutate(
-  ten = 1 + floor((init_rank-1) / 10)
-) %>% filter(
-  init_rank < 61 & !is.na(count)
-) %>% group_by(year, ten, Pos) %>% summarize(
-  count = sum(count)
-) %>% ungroup() %>% complete(
-  year, ten, Pos, fill = list(count = 0)
-)
+rank_top_10 %>% filter(
+  Pos %in% c('QB', 'TE') & ten < 4
+  ) %>% 
+  ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Top Ten Weekly Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:3), 
+    labels = paste('Top ', seq(10, 30, 10), sep = '')
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'TE' = 'dodgerblue3', 'QB' = 'forestgreen'
+    )
+  )+
+  ggsave('graphs/count of top ten weeks_qb_te.png', width = 13, height = 6)
 
 
 
 
 
 
-# number of top ten weekly finishes 
+
+
+
+
+# number of top five weekly finishes 
 # for players in a ten range
 # tes and qbs
 
@@ -605,6 +694,70 @@ rank_top_5%>% filter(
 
 
 
+
+
+
+# count of top 30 weekly finishes
+# for WR colored by finish level
+
+top_30_finishes %>% filter(Pos == 'WR') %>% 
+  ggplot(aes(ten, count))+
+  geom_col(aes(fill = ten_finish))+
+  facet_grid(year ~ .)+
+  scale_y_continuous(
+    name = 'Count of Top 30 Weekly Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+ scale_fill_manual(
+    name = 'Finish', 
+    values = c(
+      'Top 10' = 'darksalmon', 'Top 20' = 'tomato2', 'Top 30' = 'firebrick'
+    )
+  )+
+  theme_bw()+
+  ggtitle(
+    'Top 30 Finishes for WR by Pre-season ESPN Rank'
+  )+
+  ggsave(
+    'graphs/wr top 30 finishes.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+
+# count of top 30 weekly finishes
+# for RB colored by finish level
+
+top_30_finishes %>% filter(Pos == 'RB') %>% 
+  ggplot(aes(ten, count))+
+  geom_col(aes(fill = ten_finish))+
+  facet_grid(year ~ .)+
+  scale_y_continuous(
+    name = 'Count of Top 30 Weekly Finishes'
+  )+
+  scale_x_continuous(
+    name = 'ESPN Ranks', 
+    breaks = c(1:6), 
+    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  )+ scale_fill_manual(
+    name = 'Finish', 
+    values = c(
+      'Top 10' = 'cyan', 'Top 20' = 'dodgerblue', 'Top 30' = 'navy'
+    )
+  )+
+  theme_bw()+
+  ggtitle(
+    'Top 30 Finishes for RB by Pre-season ESPN Rank'
+  )+
+  ggsave(
+    'graphs/rb top 30 finishes.png', width = 13, height = 6
+  )
 
 
 
