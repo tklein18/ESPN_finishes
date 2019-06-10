@@ -769,6 +769,9 @@ top_30_finishes %>% filter(Pos == 'RB') %>%
 
 # creating weekly finish data =============================================================================
 
+# data for weekly finish rankings
+# to see if pre-season ranks are consistent over time
+
 
 rank_weeks <- left_join(
   espn_rankings, weekly_rankings, 
@@ -925,6 +928,172 @@ rank_weeks %>% filter(
   ggtitle('Count of Wide Receiver Top 21-30 Finishes by Week')+
   ggsave(
     'graphs/wr top 30 weekly count.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+
+# creating consistency data =================================================================================
+
+
+# counts of players with a certain number
+# of usable games to see if certain ranks
+# have more or less consistent players
+
+
+week_consistency <- left_join(
+  espn_rankings, weekly_rankings, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+week_consistency <- week_consistency %>% filter(
+  init_rank < 61 & !is.na(finish) & finish < 31
+) %>% mutate(
+  ten = paste('Top', 10*(1 + floor((init_rank-1) / 10))), 
+  ten_finish = paste('Top', 10*(1 + floor((finish-1) / 10)))
+) %>% group_by(year, first, last, Pos, ten, ten_finish) %>% summarize(
+  count = n()
+)
+
+top_10_consistency <- week_consistency %>% 
+  filter(
+    ten_finish == 'Top 10' & count > 7
+  ) %>% group_by(year, Pos, ten) %>% summarize(
+    count = n()
+  ) %>% ungroup() %>% complete(
+    year, Pos, ten, fill = list(count = 0)
+  )
+
+
+top_20_consistency <- week_consistency %>% filter(
+  ten_finish %in% c('Top 10', 'Top 20')
+) %>% group_by(year, first, last, Pos, ten) %>% summarize(
+  finishes = sum(count) 
+) %>% filter(finishes > 7) %>% group_by(
+  year, Pos, ten
+) %>% summarize(
+  count = n()
+)%>% ungroup() %>% complete(
+  year, Pos, ten, fill = list(count = 0)
+)
+
+
+
+top_30_consistency <- week_consistency %>% filter(
+  ten_finish %in% c('Top 10', 'Top 20', 'Top 30')
+) %>% group_by(year, first, last, Pos, ten) %>% summarize(
+  finishes = sum(count) 
+) %>% filter(finishes > 7) %>% group_by(
+  year, Pos, ten
+) %>% summarize(
+  count = n()
+)%>% ungroup() %>% complete(
+  year, Pos, ten, fill = list(count = 0)
+)
+
+
+
+
+
+
+
+# consistency graphs ========================================================================================
+
+
+
+
+top_10_consistency %>% filter(
+  Pos %in% c('RB', 'WR')
+) %>% ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Players'
+  )+
+  scale_x_discrete(
+    name = 'ESPN Ranks'
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+ggtitle(
+    'Count of Players with 8+ Top Ten Games'
+  )+ggsave(
+    'graphs/top ten consistency_rb_wr.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+
+top_20_consistency %>% filter(
+  Pos %in% c('RB', 'WR')
+) %>% ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Players'
+  )+
+  scale_x_discrete(
+    name = 'ESPN Ranks'
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+ggtitle(
+    'Count of Players with 8+ Top 20 Games'
+  )+ggsave(
+    'graphs/top 20 consistency_rb_wr.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+
+
+
+top_30_consistency %>% filter(
+  Pos %in% c('RB', 'WR')
+) %>% ggplot(aes(ten, count))+
+  geom_col(aes(fill = Pos), position = 'dodge')+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Count of Players'
+  )+
+  scale_x_discrete(
+    name = 'ESPN Ranks'
+  )+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+ggtitle(
+    'Count of Players with 8+ Top 30 Games'
+  )+ggsave(
+    'graphs/top 30 consistency_rb_wr.png', width = 13, height = 6
   )
 
 
