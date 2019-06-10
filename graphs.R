@@ -761,3 +761,171 @@ top_30_finishes %>% filter(Pos == 'RB') %>%
 
 
 
+
+
+
+
+
+
+# creating weekly finish data =============================================================================
+
+
+rank_weeks <- left_join(
+  espn_rankings, weekly_rankings, 
+  by = c('first', 'last', 'year', 'Pos' = 'Position')
+)
+
+
+rank_weeks <- rank_weeks %>% filter(
+  init_rank < 61 & !is.na(finish) & finish < 31
+) %>% mutate(
+  ten = paste('Top', 10*(1 + floor((init_rank-1) / 10))), 
+  ten_finish = paste('Top', 10*(1 + floor((finish-1) / 10)))
+) %>% group_by(year, week, ten, Pos, ten_finish) %>% summarize(
+  count = n()
+) %>% ungroup() %>% complete(
+  year, ten, Pos, ten_finish, week, fill = list(count = 0)
+)
+
+
+
+
+
+
+
+# weekly finish graph ==============================================================================
+
+# count of top ten running back finishes
+# by week, by year, by pre-season rank
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 10' & Pos == 'RB'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top Ten Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Running Back Top Ten Finishes by Week')+
+  ggsave(
+    'graphs/rb top ten weekly count.png', width = 13, height = 6
+  )
+
+
+# count of top ten wide receiver finishes
+# by week, by year, by pre-season rank
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 10' & Pos == 'WR'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top Ten Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Wide Receiver Top Ten Finishes by Week')+
+  ggsave(
+    'graphs/wr top ten weekly count.png', width = 13, height = 6
+  )
+
+
+
+# rb weekly count of 11-20 finishes 
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 20' & Pos == 'RB'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top 11-20 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Running Back Top 11-20 Finishes by Week')+
+  ggsave(
+    'graphs/rb top 20 weekly count.png', width = 13, height = 6
+  )
+
+
+# wr top 20 finishes by week
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 20' & Pos == 'WR'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top 11-20 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Wide Receiver Top 11-20 Finishes by Week')+
+  ggsave(
+    'graphs/wr top 20 weekly count.png', width = 13, height = 6
+  )
+
+
+
+
+
+
+# rb weekly count of 21-30 finishes 
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 30' & Pos == 'RB'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top 21-30 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Running Back Top 11-20 Finishes by Week')+
+  ggsave(
+    'graphs/rb top 30 weekly count.png', width = 13, height = 6
+  )
+
+
+# wr top 20 finishes by week
+
+rank_weeks %>% filter(
+  ten_finish == 'Top 30' & Pos == 'WR'
+) %>% ggplot(aes(week, count))+
+  geom_line(aes(group = ten, color = ten))+
+  facet_grid(year ~ . )+
+  scale_y_continuous(
+    name = 'Count of Top 21-30 Finishes'
+  )+
+  scale_x_continuous(
+    name = 'Week', breaks = c(1:16)
+  )+
+  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  theme_bw()+
+  ggtitle('Count of Wide Receiver Top 21-30 Finishes by Week')+
+  ggsave(
+    'graphs/wr top 30 weekly count.png', width = 13, height = 6
+  )
+
+
+
