@@ -116,14 +116,9 @@ full_szn_rf %>% ggplot(aes(init_rank, variance))+
 
 
 
-# probably not much value of looking at 
-# players ranked over 60
-# if 10 teams, 6 of any positions is the likely 
-# max, so anything past that is maybe the last pick of
-# the draft
 
-full_szn_top <- full_szn_rf %>% filter(
-  init_rank < 61
+full_szn_top <- full_szn_rf %>% mutate(
+  ten = paste('Top', 10*(1 + floor((init_rank-1) / 10)))
 )
 
 
@@ -183,9 +178,6 @@ full_szn_top %>%filter(
 # so you can see expected finish from each ten 
 # compare across years and positions
 
-full_szn_top <- full_szn_top %>% mutate(
-  ten = 1 + floor((init_rank-1) / 10)
-)
 
 full_szn_top$top_rank <- if_else(
   full_szn_top$finish <31, 1, 0
@@ -204,11 +196,19 @@ ten_ranks <- full_szn_top %>% group_by(
   top_players = sum(top_rank), 
   net_var = sum(variance), 
   top_ten = sum(top_ten)
+) %>% ungroup() %>% complete(
+  year, ten, Pos, fill = list(
+    top_ten = 0, net_var = 0, top_players = 0, 
+    avg_finish = 0, avg_var = 0
+  )
+  )
+
+
+
+ten_ranks$ten <- factor(
+  ten_ranks$ten, 
+  levels = paste('Top', seq(10, 110, 10))
 )
-
-
-
-
 
 
 
@@ -231,10 +231,8 @@ ten_ranks %>% filter(
     name = 'Count of Top 30 Finishes', 
     breaks = c(0:10)
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+
   ggsave(
@@ -248,7 +246,8 @@ ten_ranks %>% filter(
 # within the same 10 ranks (e.g. 1-10, 10-20)
 
 ten_ranks %>% filter(
-  Pos %in% c('TE', 'QB')
+  Pos %in% c('TE', 'QB') &
+    ten %in% c('Top 10', 'Top 20', 'Top 30', 'Top 40')
 ) %>% ggplot(aes(ten, top_ten))+
   geom_col(aes(fill = Pos), position = 'dodge')+
   facet_grid(year ~ . )+
@@ -260,10 +259,8 @@ ten_ranks %>% filter(
     name = 'Count of Top 10 Finishes', 
     breaks = c(0:10)
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+
   ggsave(
@@ -294,10 +291,8 @@ ten_ranks %>% filter(
   scale_y_continuous(
     name = 'Average Variance between Rank and Finish'
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+
   ggsave(
@@ -331,10 +326,8 @@ ten_ranks %>% filter(
   scale_y_continuous(
     name = 'Average Finish'
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+ggsave(
     'graphs/ESPN rank average finish.png', 
@@ -366,10 +359,8 @@ ten_ranks %>% filter(
   scale_y_continuous(
     name = 'Average Variance between Rank and Finish'
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+
   ggsave(
@@ -402,10 +393,8 @@ ten_ranks %>% filter(
     name = 'Count of Top 10 Finishes', 
     breaks = c(0:10)
   )+
-  scale_x_continuous(
-    name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+  scale_x_discrete(
+    name = 'ESPN Ranks'
   )+
   theme_bw()+
   ggsave(
@@ -499,7 +488,7 @@ rank_top_10 <- left_join(
 rank_top_10 <- rank_top_10 %>% mutate(
   ten = 1 + floor((init_rank-1) / 10)
 ) %>% filter(
-  init_rank < 61 & !is.na(count)
+   !is.na(count)
 ) %>% group_by(year, ten, Pos) %>% summarize(
   count = sum(count)
 ) %>% ungroup() %>% complete(
@@ -533,7 +522,7 @@ rank_top_5 <- left_join(
 rank_top_5 <- rank_top_5 %>% mutate(
   ten = 1 + floor((init_rank-1) / 10)
 ) %>% filter(
-  init_rank < 61 & !is.na(count)
+   !is.na(count)
 ) %>% group_by(year, ten, Pos) %>% summarize(
   count = sum(count)
 ) %>% ungroup() %>% complete(
@@ -570,11 +559,11 @@ top_30_finishes <- left_join(
 top_30_finishes <- top_30_finishes %>% mutate(
   ten = 1 + floor((init_rank-1) / 10)
 ) %>% filter(
-  init_rank < 61 & !is.na(count)
+   !is.na(count)
 ) %>% group_by(year, ten, Pos, ten_finish) %>% summarize(
   count = sum(count)
 ) %>% ungroup() %>% complete(
-  year, ten, Pos, fill = list(count = 0)
+  year, ten, Pos, ten_finish, fill = list(count = 0)
 )
 
 
@@ -709,8 +698,8 @@ top_30_finishes %>% filter(Pos == 'WR') %>%
   )+
   scale_x_continuous(
     name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+    breaks = c(1:12), 
+    labels = paste('Top ', seq(10, 120, 10), sep = '')
   )+ scale_fill_manual(
     name = 'Finish', 
     values = c(
@@ -734,7 +723,7 @@ top_30_finishes %>% filter(Pos == 'WR') %>%
 # count of top 30 weekly finishes
 # for RB colored by finish level
 
-top_30_finishes %>% filter(Pos == 'RB') %>% 
+top_30_finishes %>% filter(Pos == 'RB' & ten < 10) %>% 
   ggplot(aes(ten, count))+
   geom_col(aes(fill = ten_finish))+
   facet_grid(year ~ .)+
@@ -743,8 +732,8 @@ top_30_finishes %>% filter(Pos == 'RB') %>%
   )+
   scale_x_continuous(
     name = 'ESPN Ranks', 
-    breaks = c(1:6), 
-    labels = paste('Top ', seq(10, 60, 10), sep = '')
+    breaks = c(1:9), 
+    labels = paste('Top ', seq(10, 90, 10), sep = '')
   )+ scale_fill_manual(
     name = 'Finish', 
     values = c(
@@ -780,7 +769,7 @@ rank_weeks <- left_join(
 
 
 rank_weeks <- rank_weeks %>% filter(
-  init_rank < 61 & !is.na(finish) & finish < 31
+   !is.na(finish) & finish < 31
 ) %>% mutate(
   ten = paste('Top', 10*(1 + floor((init_rank-1) / 10))), 
   ten_finish = paste('Top', 10*(1 + floor((finish-1) / 10)))
@@ -812,7 +801,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Running Back Top Ten Finishes by Week')+
   ggsave(
@@ -834,7 +823,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Wide Receiver Top Ten Finishes by Week')+
   ggsave(
@@ -856,7 +845,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Running Back Top 11-20 Finishes by Week')+
   ggsave(
@@ -877,7 +866,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Wide Receiver Top 11-20 Finishes by Week')+
   ggsave(
@@ -902,7 +891,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Running Back Top 11-20 Finishes by Week')+
   ggsave(
@@ -923,7 +912,7 @@ rank_weeks %>% filter(
   scale_x_continuous(
     name = 'Week', breaks = c(1:16)
   )+
-  scale_color_brewer(name = 'ESPN Rank', palette = 'Paired')+
+  scale_color_viridis_d(name = 'ESPN Rank')+
   theme_bw()+
   ggtitle('Count of Wide Receiver Top 21-30 Finishes by Week')+
   ggsave(
@@ -953,49 +942,61 @@ week_consistency <- left_join(
 
 
 week_consistency <- week_consistency %>% filter(
-  init_rank < 61 & !is.na(finish) & finish < 31
+   !is.na(finish) & finish < 31
 ) %>% mutate(
   ten = paste('Top', 10*(1 + floor((init_rank-1) / 10))), 
   ten_finish = paste('Top', 10*(1 + floor((finish-1) / 10)))
 ) %>% group_by(year, first, last, Pos, ten, ten_finish) %>% summarize(
   count = n()
+) %>% complete(
+  year, first, last, Pos, ten, ten_finish, fill = list(count = 0)
 )
 
-top_10_consistency <- week_consistency %>% 
+week_consistency$ten <- factor(
+  week_consistency$ten, 
+  levels = paste('Top', seq(10, 110, 10))
+)
+
+
+top_10_consistency <- week_consistency %>% spread(
+  key = ten_finish, value = count
+) %>% 
   filter(
-    ten_finish == 'Top 10' & count > 7
+    !is.na(`Top 10`) & `Top 10` > 7
   ) %>% group_by(year, Pos, ten) %>% summarize(
-    count = n()
+    count = sum(`Top 10`)
   ) %>% ungroup() %>% complete(
     year, Pos, ten, fill = list(count = 0)
   )
 
 
-top_20_consistency <- week_consistency %>% filter(
-  ten_finish %in% c('Top 10', 'Top 20')
-) %>% group_by(year, first, last, Pos, ten) %>% summarize(
-  finishes = sum(count) 
-) %>% filter(finishes > 7) %>% group_by(
-  year, Pos, ten
-) %>% summarize(
-  count = n()
-)%>% ungroup() %>% complete(
-  year, Pos, ten, fill = list(count = 0)
-)
+top_20_consistency <- week_consistency %>% spread(
+  key = ten_finish, value = count, fill = 0
+) %>% mutate(
+  top_20 = `Top 10` + `Top 20`
+) %>% 
+  filter(
+    !is.na(top_20) & top_20 > 7
+  ) %>% group_by(year, Pos, ten) %>% summarize(
+    count = sum(top_20)
+  ) %>% ungroup() %>% complete(
+    year, Pos, ten, fill = list(count = 0)
+  )
 
 
 
-top_30_consistency <- week_consistency %>% filter(
-  ten_finish %in% c('Top 10', 'Top 20', 'Top 30')
-) %>% group_by(year, first, last, Pos, ten) %>% summarize(
-  finishes = sum(count) 
-) %>% filter(finishes > 7) %>% group_by(
-  year, Pos, ten
-) %>% summarize(
-  count = n()
-)%>% ungroup() %>% complete(
-  year, Pos, ten, fill = list(count = 0)
-)
+top_30_consistency <- week_consistency %>% spread(
+  key = ten_finish, value = count, fill = 0
+) %>% mutate(
+  top_30 = `Top 10` + `Top 20` + `Top 30`
+) %>% 
+  filter(
+    !is.na(top_30) & top_30 > 7
+  ) %>% group_by(year, Pos, ten) %>% summarize(
+    count = sum(top_30)
+  ) %>% ungroup() %>% complete(
+    year, Pos, ten, fill = list(count = 0)
+  )
 
 
 
@@ -1119,11 +1120,33 @@ weekly_rankings %>% filter(
       'WR' = 'tomato3'
     )
   )+
-  ggtitle('Distribution of Points Scored')+
+  ggtitle('Distribution of Points Scored - Top 30')+
   ggsave(
-    'graphs/weekly point distribution_rb_wr.png', width = 13, height = 6
+    'graphs/weekly point distribution_top30_rb_wr.png', width = 13, height = 6
   )
 
 
+
+
+
+
+
+weekly_rankings %>% filter(
+  Position %in% c('WR', 'RB') & finish < 61
+) %>% ggplot(aes(Points))+
+  geom_density(aes(fill = Position), alpha = .2)+
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  ggtitle('Distribution of Points Scored - Top 60')+
+  ggsave(
+    'graphs/weekly point distribution_top60_rb_wr.png', width = 13, height = 6
+  )
 
 
