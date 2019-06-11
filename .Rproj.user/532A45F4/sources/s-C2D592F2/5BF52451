@@ -1,0 +1,29 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1560219100332.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "5BF52451",
+    "lastKnownWriteTime" : 4294967302,
+    "last_content_update" : 1560219100332,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "cacheKey" : "A79909C4",
+        "caption" : "week_consistency",
+        "contentUrl" : "grid_resource/gridviewer.html?env=&obj=week_consistency&cache_key=A79909C4",
+        "displayedObservations" : 1484,
+        "environment" : "",
+        "object" : "week_consistency",
+        "preview" : 0,
+        "totalObservations" : 1484,
+        "variables" : 7
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_dataframe"
+}

@@ -1110,9 +1110,19 @@ weekly_rankings %>% filter(
   Position %in% c('WR', 'RB') & finish < 31
 ) %>% ggplot(aes(Points))+
   geom_density(aes(fill = Position), alpha = .2)+
-  facet_grid(year ~ .)
-
-
+  facet_grid(year ~ .)+
+  theme_bw()+
+  scale_fill_manual(
+    name = 'Position', 
+    values = c(
+      'RB' = 'dodgerblue4', 
+      'WR' = 'tomato3'
+    )
+  )+
+  ggtitle('Distribution of Points Scored')+
+  ggsave(
+    'graphs/weekly point distribution_rb_wr.png', width = 13, height = 6
+  )
 
 
 
