@@ -1098,3 +1098,22 @@ top_30_consistency %>% filter(
 
 
 
+
+
+
+
+
+# point distribution of weekly top finishes ================================================================
+
+
+weekly_rankings %>% filter(
+  Position %in% c('WR', 'RB') & finish < 31
+) %>% ggplot(aes(Points))+
+  geom_density(aes(fill = Position), alpha = .2)+
+  facet_grid(year ~ .)
+
+
+
+
+
+

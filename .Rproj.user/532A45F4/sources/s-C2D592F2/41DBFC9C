@@ -1,0 +1,23 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1560210914209.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "4154390869",
+    "id" : "41DBFC9C",
+    "lastKnownWriteTime" : 1560211347,
+    "last_content_update" : 1560211347491,
+    "path" : "~/Desktop/ESPN_finishes/scraping.R",
+    "project_path" : "scraping.R",
+    "properties" : {
+        "cursorPosition" : "399,0",
+        "scrollLine" : "382",
+        "tempName" : "Untitled1"
+    },
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
