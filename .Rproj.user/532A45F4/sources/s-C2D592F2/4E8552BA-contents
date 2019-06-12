@@ -30,7 +30,12 @@
 
 
 
-
+weekly_projections <- read.csv(
+  'data/fp projections_16_18.csv', 
+  stringsAsFactors = F
+)
+ 
+ 
 
 # joining rankings to finishes ======================================================================
 
@@ -1148,5 +1153,205 @@ weekly_rankings %>% filter(
   ggsave(
     'graphs/weekly point distribution_top60_rb_wr.png', width = 13, height = 6
   )
+
+
+
+
+
+
+# joining weekly projections to weekly finish data =============================================================
+
+
+projection_finish <- left_join(
+  weekly_projections, weekly_rankings,
+  by = c('first', 'last', 'year', 'week', 'pos' = 'Position')
+)
+
+# forgot to make names all lower case
+
+projection_finish %>% filter(
+  is.na(finish)
+)
+
+weekly_projections[, c('first', 'last')] <- lapply(
+  weekly_projections[, c('first', 'last')], tolower
+)
+
+projection_finish <- left_join(
+  weekly_projections, weekly_rankings,
+  by = c('first', 'last', 'year', 'week', 'pos' = 'Position')
+)
+
+
+# after reviewing that list
+# it appears those players didn't actually play/score
+# in that week 
+
+projection_finish %>% filter(
+  is.na(finish)
+)
+
+
+
+projection_finish <- projection_finish %>% filter(
+  !is.na(finish)
+) %>% mutate(
+  point_variance = Points - FPTS
+)
+
+
+
+
+
+# graphing variance ===================================================================================
+
+
+
+
+# graph of average actual v projection variance 
+# by position over the course of the years 
+# for 2016-2018
+
+projection_finish %>% group_by(
+  pos, year
+) %>%  summarize(
+  avg_variance = mean(point_variance)
+) %>% mutate(
+  higher = avg_variance > 0
+) %>% ggplot(aes(pos, avg_variance))+
+  geom_col(aes(fill = higher))+
+  facet_grid(. ~ year)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Average Point-Projection Variance'
+  )+
+  scale_x_discrete(name = 'Position')+
+  scale_fill_manual(
+    name = '', 
+    values = c('TRUE' = 'forestgreen', 'FALSE' = 'firebrick'), 
+    labels = c('TRUE' = 'Higher', 'FALSE' = 'Lower')
+  )+
+  guides(fill = guide_legend(reverse = T))+
+  ggsave(
+    'graphs/total position point-projection variance.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+
+
+# same graph as above, but only for projected 10+ points
+
+projection_finish %>% filter(
+  FPTS > 9.9
+) %>% group_by(
+  pos, year
+) %>%  summarize(
+  avg_variance = mean(point_variance)
+) %>% mutate(
+  higher = avg_variance > 0
+) %>% ggplot(aes(pos, avg_variance))+
+  geom_col(aes(fill = higher))+
+  facet_grid(. ~ year)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Variance'
+  )+
+  scale_x_discrete(name = 'Position')+
+  scale_fill_manual(
+    name = '', 
+    values = c('TRUE' = 'forestgreen', 'FALSE' = 'firebrick'), 
+    labels = c('TRUE' = 'Higher', 'FALSE' = 'Lower')
+  )+
+  guides(fill = guide_legend(reverse = T))+
+  ggtitle(
+    'Average Variance in Actual v Projection - 10+ Projected Points'
+  )+
+  ggsave(
+    'graphs/total position point-projection variance_10.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+# same graph as above, but only for projected 15+ points
+
+projection_finish %>% filter(
+  FPTS > 14.9
+) %>% group_by(
+  pos, year
+) %>%  summarize(
+  avg_variance = mean(point_variance)
+) %>% mutate(
+  higher = avg_variance > 0
+) %>% ggplot(aes(pos, avg_variance))+
+  geom_col(aes(fill = higher))+
+  facet_grid(. ~ year)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Variance'
+  )+
+  scale_x_discrete(name = 'Position')+
+  scale_fill_manual(
+    name = '', 
+    values = c('TRUE' = 'forestgreen', 'FALSE' = 'firebrick'), 
+    labels = c('TRUE' = 'Higher', 'FALSE' = 'Lower')
+  )+
+  guides(fill = guide_legend(reverse = T))+
+  ggtitle(
+    'Average Variance in Actual v Projection - 15+ Projected Points'
+  )+
+  ggsave(
+    'graphs/total position point-projection variance_15.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+
+# same graph as above, but only for projected 20+ points
+
+projection_finish %>% filter(
+  FPTS > 19.9
+) %>% group_by(
+  pos, year
+) %>%  summarize(
+  avg_variance = mean(point_variance)
+) %>% mutate(
+  higher = avg_variance > 0
+) %>% ggplot(aes(pos, avg_variance))+
+  geom_col(aes(fill = higher))+
+  facet_grid(. ~ year)+
+  theme_bw()+
+  scale_y_continuous(
+    name = 'Variance'
+  )+
+  scale_x_discrete(name = 'Position')+
+  scale_fill_manual(
+    name = '', 
+    values = c('TRUE' = 'forestgreen', 'FALSE' = 'firebrick'), 
+    labels = c('TRUE' = 'Higher', 'FALSE' = 'Lower')
+  )+
+  guides(fill = guide_legend(reverse = T))+
+  ggtitle(
+    'Average Variance in Actual v Projection - 20+ Projected Points'
+  )+
+  ggsave(
+    'graphs/total position point-projection variance_20.png', 
+    width = 13, height = 6
+  )
+
+
+
+
+
+
 
 

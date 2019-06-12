@@ -30,7 +30,12 @@
 
 
 
-
+weekly_projections <- read.csv(
+  'data/fp projections_16_18.csv', 
+  stringsAsFactors = F
+)
+ 
+ 
 
 # joining rankings to finishes ======================================================================
 
@@ -1148,5 +1153,25 @@ weekly_rankings %>% filter(
   ggsave(
     'graphs/weekly point distribution_top60_rb_wr.png', width = 13, height = 6
   )
+
+
+
+
+
+
+# joining weekly projections to weekly finish data =============================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
